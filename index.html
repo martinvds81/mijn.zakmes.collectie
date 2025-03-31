@@ -1,5 +1,3 @@
-<!-- © 2025 Dennis de Koster. Alleen voor mijn eigen prive gebruik. -->
-
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -145,11 +143,6 @@
             text-shadow: 2px 2px 10px white;
         }
 
-        a {
-            color: inherit; /* Zorgt ervoor dat de link dezelfde kleur behoudt als de omringende tekst */
-            text-decoration: underline; /* Houdt de onderstreping */
-        }
-
         strong {
             color: #0288d1;
         }
@@ -186,69 +179,191 @@
         }
     </style>
     <script>
-        document.addEventListener('DOMContentLoaded', (event) => {
-            document.getElementById('sort').value = 'aankoopdatum';
-            document.getElementById('sortOrder').value = 'desc';
-            sortKnives();
-            updateSummary();
-        });
-    
-        function searchKnives() {
-            const query = document.getElementById('search').value.toLowerCase();
-            const cards = document.querySelectorAll('.card');
-            cards.forEach(card => {
-                const content = card.textContent.toLowerCase();
-                card.style.display = content.includes(query) ? 'block' : 'none';
-            });
-            updateSummary();
-        }
-        
-        function clearSearch() {
-            document.getElementById('search').value = '';
-            searchKnives(); // Herlaad de zoekresultaten
+        let knifeData = []; // Global variable to store loaded knife data
+
+        const data = {
+            "knives": [
+                {
+                    "brand": "Kunwu Knives",
+                    "model": "Compadre",
+                    "product_url": "https://www.lamnia.com/nl/p/103263/messen/kunwu-knives-reverse-tux-compadre-diamond-texture-ti-dlc-vouwmes",
+                    "image": {
+                        "src": "https://cdn11.bigcommerce.com/s-fedcb/images/stencil/640w/products/30527/105951/Kunwu_K706C-T401__22709.1.jpg",
+                        "alt": "Compadre"
+                    },
+                    "specifications": {
+                        "handle_material": "Reverse Tux Diamond Texture Titanium",
+                        "blade_shape": "Clippoint",
+                        "finish": "Satin DLC",
+                        "opening_method": "Thumb hole",
+                        "lock_type": "Frame lock",
+                        "weight": "111 g",
+                        "purchase_date": "2025-03-24",
+                        "steel_type": "Vanax",
+                        "hardness": "60-62 HRC",
+                        "closed_length": "11.2 cm",
+                        "open_length": "18.0 cm",
+                        "blade_length": "7.5 cm",
+                        "new_price": "€ 313.35",
+                        "purchase_price": "€ 313.35"
+                    }
+                },
+                {
+                    "brand": "Civivi",
+                    "model": "Altus C20076-6",
+                    "product_url": "https://www.knivesandtools.nl/nl/pt/-civivi-altus-c20076-6-stonewashed-aluminium-blue-zakmes.htm",
+                    "image": {
+                        "src": "https://assets.katogroup.eu/i/katogroup/CIC20076-6_01_civivi?%24product-image%24=&fmt=auto&h=868&w=1304",
+                        "alt": "Altus"
+                    },
+                    "specifications": {
+                        "variant": "Blue Stonewashed Aluminium",
+                        "blade_shape": "Droppoint",
+                        "finish": "Stonewashed",
+                        "open_method": "Duimsteun",
+                        "lock_type": "Buttonlock",
+                        "weight": "96 g",
+                        "steel_type": "Nitro-V",
+                        "hardness": "61 HRC",
+                        "closed_length": "10.5 cm",
+                        "open_length": "18 cm",
+                        "blade_length": "7.5 cm",
+                        "new_price": "€ 95,95",
+                        "purchase_price": "€ 94,95",
+                        "purchase_date": "29-05-2024",
+                        "modifications": {
+                            "description": "Unlocked Composites carbon scales",
+                            "mod_url": "https://unlockedcomposites.com"
+                        }
+                    }
+                }
+            ]
+        };
+
+        // Function to load JSON data
+        function loadKnifeData() {
+            knifeData = data.knives; // Store data globally
+            renderKnives(knifeData);
+            updateTotals(knifeData);
         }
 
+        // Function to search knives
+        function searchKnives() {
+            const query = document.getElementById("search").value.toLowerCase();
+            const filteredKnives = knifeData.filter(knife =>
+                knife.brand.toLowerCase().includes(query) ||
+                knife.model.toLowerCase().includes(query) ||
+                knife.specifications.blade_shape.toLowerCase().includes(query) ||
+                knife.specifications.steel_type.toLowerCase().includes(query)
+            );
+            
+            renderKnives(filteredKnives);
+            updateTotals(filteredKnives);
+        }
+
+        // Function to clear search
+        function clearSearch() {
+            document.getElementById("search").value = "";
+            renderKnives(knifeData);
+            updateTotals(knifeData);
+        }
+
+        // Function to sort knives
         function sortKnives() {
-            const sortBy = document.getElementById('sort').value;
-            const sortOrder = document.getElementById('sortOrder').value;
-            const container = document.querySelector('.container');
-            const cards = Array.from(container.children);
-            cards.sort((a, b) => {
-                let aValue = a.querySelector(`.${sortBy}`).textContent.trim();
-                let bValue = b.querySelector(`.${sortBy}`).textContent.trim();
-    
-                if (sortBy === 'aankoopdatum') {
-                    aValue = aValue.match(/\d{2}-\d{2}-\d{4}/)[0];
-                    bValue = bValue.match(/\d{2}-\d{2}-\d{4}/)[0];
-                    aValue = new Date(aValue.split('-').reverse().join('-'));
-                    bValue = new Date(bValue.split('-').reverse().join('-'));
-                    return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+
+          
+
+            const sortBy = document.getElementById("sort").value;
+            const sortOrder = document.getElementById("sortOrder").value;
+            
+            const sortedKnives = [...knifeData].sort((a, b) => {
+                const valueA = getValue(a, sortBy);
+                const valueB = getValue(b, sortBy);
+
+                if (typeof valueA === "number" && typeof valueB === "number") {
+                    return sortOrder === "asc" ? valueA - valueB : valueB - valueA;
                 } else {
-                    return sortOrder === 'asc' ? aValue.localeCompare(bValue, undefined, { numeric: true }) : bValue.localeCompare(aValue, undefined, { numeric: true });
+                    return sortOrder === "asc" ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
                 }
             });
-            container.innerHTML = '';
-            cards.forEach(card => container.appendChild(card));
-            updateSummary();
+
+            console.log(sortedKnives);
+
+            renderKnives(sortedKnives);
         }
 
-        function updateSummary() {
-            const cards = document.querySelectorAll('.card');
-            const totalKnives = cards.length;
-            let totalValue = 0;
-            let totalPurchaseValue = 0;
-            cards.forEach(card => {
-                const valueText = card.querySelector('.nieuwwaarde').textContent;
-                const purchaseValueText = card.querySelector('.aankoopwaarde').textContent;
-                const numericValue = parseFloat(valueText.replace(/[^\d,.-]/g, '').replace(',', '.'));
-                const numericPurchaseValue = parseFloat(purchaseValueText.replace(/[^\d,.-]/g, '').replace(',', '.'));
-                totalValue += numericValue;
-                totalPurchaseValue += numericPurchaseValue;
-            });
-            document.getElementById('totalKnives').textContent = `Aantal mesjes: ${totalKnives}`;
-            document.getElementById('totalValue').textContent = `Nieuwwaarde: € ${totalValue.toFixed(2)}`;
-            document.getElementById('totalPurchaseValue').textContent = `Aankoopwaarde: € ${totalPurchaseValue.toFixed(2)}`;
+        // Helper function to get values for sorting
+        function getValue(knife, key) {
+            return knife.specifications[key] || knife[key] || "";
         }
+
+        // Function to update total values
+        function updateTotals(knives) {
+            document.getElementById("totalKnives").innerHTML = `Total Knives: ${knives.length}`;
+            
+            const totalNewValue = knives.reduce((sum, knife) => sum + parseFloat(knife.specifications.new_price.replace("€ ", "").replace(",", ".")), 0);
+            const totalPurchaseValue = knives.reduce((sum, knife) => sum + parseFloat(knife.specifications.purchase_price.replace("€ ", "").replace(",", ".")), 0);
+            
+            document.getElementById("totalValue").innerHTML = `Total New Value: € ${totalNewValue.toFixed(2)}`;
+            document.getElementById("totalPurchaseValue").innerHTML = `Total Purchase Value: € ${totalPurchaseValue.toFixed(2)}`;
+
+            // Last modified time
+            document.getElementById("lastModified").innerHTML = `Last Modified: ${new Date().toLocaleString()}`;
+        }
+
+        // Function to load JSON data
+        function renderKnives(knives) {
+            const container = document.getElementById("knives-container");
+            container.innerHTML = ""; 
+
+            // Loop through all knives and create HTML dynamically
+            knives.forEach(knife => {
+                const card = document.createElement("div");
+                card.classList.add("card");
+
+                card.innerHTML = `
+                    <div class="card-content">
+                        <div class="specs">
+                            <div class="row">
+                                <div class="topleft">
+                                    <h2>${knife.brand} ${knife.model}</h2>
+                                </div>
+                                <div class="topright">
+                                    <a href="${knife.product_url}" target="_blank">
+                                        <img src="${knife.image.src}" class="rotated-image" alt="${knife.image.alt}">
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="left">
+                                    <div><strong>Handle Material:</strong><br>${knife.specifications.handle_material}</div>
+                                    <div><strong>Blade Shape:</strong><br>${knife.specifications.blade_shape}</div>
+                                    <div><strong>Finish:</strong><br>${knife.specifications.finish}</div>
+                                    <div><strong>Opening Method:</strong><br>${knife.specifications.opening_method}</div>
+                                    <div><strong>Lock Type:</strong><br>${knife.specifications.lock_type}</div>
+                                    <div><strong>Weight:</strong><br>${knife.specifications.weight}</div>
+                                    <div><strong>Purchase Date:</strong><br>${knife.specifications.purchase_date}</div>
+                                </div>
+                                <div class="right">
+                                    <div><strong>Steel Type:</strong><br>${knife.specifications.steel_type}</div>
+                                    <div><strong>Hardness:</strong><br>${knife.specifications.hardness}</div>
+                                    <div><strong>Closed Length:</strong><br>${knife.specifications.closed_length}</div>
+                                    <div><strong>Open Length:</strong><br>${knife.specifications.open_length}</div>
+                                    <div><strong>Blade Length:</strong><br>${knife.specifications.blade_length}</div>
+                                    <div><strong>New Price:</strong><br>${knife.specifications.new_price}</div>
+                                    <div><strong>Purchase Price:</strong><br>${knife.specifications.purchase_price}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+        
+        // Load data when page is loaded
+        window.onload = loadKnifeData;
     </script>
 </head>
 <body>
@@ -256,7 +371,7 @@
         <div id="totalKnives"></div>
         <div id="totalValue"></div>
         <div id="totalPurchaseValue"></div>
-        <div>Laatst bijgewerkt: 30-03-2025</div>
+        <div id="lastModified"></div>
     </div>
     <div class="search-sort-container">
         <div class="search-bar">
@@ -264,22 +379,21 @@
         </div>
         <div class="sort-options">Sorteren op:&nbsp;
             <select id="sort" onchange="sortKnives()">
-                <option value="merk">Merk</option>
-                <option value="naam">Naam</option>
-                <option value="uitvoering">Uitvoering</option>
-                <option value="lemmet-vorm">Lemmet vorm</option>
-                <option value="staalsoort">Staalsoort</option>
-                <option value="hardheid">Hardheid</option>
-                <option value="afwerking">Afwerking</option>
-                <option value="openmethode">Openmethode</option>
-                <option value="vergrendeling">Vergrendeling</option>
-                <option value="lengte-gesloten">Lengte gesloten</option>
-                <option value="lengte-geopend">Lengte geopend</option>
-                <option value="lengte-lemmet">Lengte lemmet</option>
-                <option value="gewicht">Gewicht</option>
-                <option value="nieuwwaarde">Nieuwwaarde</option>
-                <option value="aankoopwaarde">Aankoopwaarde</option>
-                <option value="aankoopdatum">Aankoopdatum</option>
+                <option value="brand">Merk</option>
+                <option value="model">Naam</option>
+                <option value="blade_shape">Lemmet vorm</option>
+                <option value="steel_type">Staalsoort</option>
+                <option value="hardness">Hardheid</option>
+                <option value="finish">Afwerking</option>
+                <option value="open_method">Openmethode</option>
+                <option value="lock_type">Vergrendeling</option>
+                <option value="closed_length">Lengte gesloten</option>
+                <option value="open_length">Lengte geopend</option>
+                <option value="blade_length">Lengte lemmet</option>
+                <option value="weight">Gewicht</option>
+                <option value="new_price">Nieuwwaarde</option>
+                <option value="purchase_price">Aankoopwaarde</option>
+                <option value="purchase_date">Aankoopdatum</option>
             </select>
             <select id="sortOrder" onchange="sortKnives()">
                 <option value="asc">Oplopend</option>
@@ -291,595 +405,9 @@
         <div id="totalPurchaseValue"></div>
         <div id="lastModified"></div>
     </div>
-    <div class="container">
-
-        <div class="card">
-            <div class="card-content">
-                <div class="specs">
-                    <div class="row">
-                        <div class="topleft">
-                            <h2><div class="merk">Civivi</div> <div class="naam">Mini Praxis C18026C-1</div></h2>
-                        </div>
-                        <div class="topright">
-                            <a href="https://www.knivesandtools.nl/nl/pt/-civivi-mini-praxis-c18026c-1-green-g10-zakmes.htm" class="link-image" target="_blank"><img src="https://assets.katogroup.eu/i/katogroup/CIC18026C-1_01_civivi?%24product-image%24=&fmt=auto&h=868&w=1304" alt="Mini Praxis"></a>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="left">
-                            <div class="uitvoering"><strong>Uitvoering:</strong><br>Green G10</div>
-                            <div class="lemmet-vorm"><strong>Lemmet vorm:</strong><br>Droppoint</div>
-                            <div class="afwerking"><strong>Afwerking:</strong><br>Blackwashed</div>
-                            <div class="openmethode"><strong>Openmethode:</strong><br>Flipper</div>
-                            <div class="vergrendeling"><strong>Vergrendeling:</strong><br>Linerlock</div>
-                            <div class="gewicht"><strong>Gewicht:</strong><br>78 g</div>
-                            <div class="aankoopdatum"><strong>Aankoopdatum:</strong><br>09-05-2024</div>
-                        </div>
-                        <div class="right">
-                            <div class="staalsoort"><strong>Staalsoort:</strong><br>D2</div>
-                            <div class="hardheid"><strong>Hardheid:</strong><br>58-60 HRC</div>
-                            <div class="lengte-gesloten"><strong>Lengte gesloten:</strong><br>9,6 cm</div>
-                            <div class="lengte-geopend"><strong>Lengte geopend:</strong><br>17,3 cm</div>
-                            <div class="lengte-lemmet"><strong>Lengte lemmet:</strong><br>8,4 cm</div>
-                            <div class="nieuwwaarde"><strong>Nieuwwaarde:</strong><br>€ 39,45</div>
-                            <div class="aankoopwaarde"><strong>Aankoopwaarde:</strong><br>€ 39,45</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="card">
-            <div class="card-content">
-                <div class="specs">
-                    <div class="row">
-                        <div class="topleft">
-                            <h2><div class="merk">Civivi</div> <div class="naam">Altus C20076-6</div></h2>
-                        </div>
-                        <div class="topright">
-                            <a href="https://www.knivesandtools.nl/nl/pt/-civivi-altus-c20076-6-stonewashed-aluminium-blue-zakmes.htm" class="link-image" target="_blank"><img src="https://assets.katogroup.eu/i/katogroup/CIC20076-6_01_civivi?%24product-image%24=&fmt=auto&h=868&w=1304" alt="Altus"></a>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="left">
-                            <div class="uitvoering"><strong>Uitvoering:</strong><br>Blue Stonewashed Aluminium</div>
-                            <div class="lemmet-vorm"><strong>Lemmet vorm:</strong><br>Droppoint</div>
-                            <div class="afwerking"><strong>Afwerking:</strong><br>Stonewashed</div>
-                            <div class="openmethode"><strong>Openmethode:</strong><br>Duimsteun</div>
-                            <div class="vergrendeling"><strong>Vergrendeling:</strong><br>Buttonlock</div>
-                            <div class="gewicht"><strong>Gewicht:</strong><br>96 g</div>
-                            <div class="aankoopdatum"><strong>Aankoopdatum:</strong><br>29-05-2024</div>
-                            <div class="mods"><strong>Aanpassingen:</strong><br><a href="https://unlockedcomposites.com" target="_blank">Unlocked Composites</a> carbon scales</div>
-                        </div>
-                        <div class="right">
-                            <div class="staalsoort"><strong>Staalsoort:</strong><br>Nitro-V</div>
-                            <div class="hardheid"><strong>Hardheid:</strong><br>61 HRC</div>
-                            <div class="lengte-gesloten"><strong>Lengte gesloten:</strong><br>10,5 cm</div>
-                            <div class="lengte-geopend"><strong>Lengte geopend:</strong><br>18 cm</div>
-                            <div class="lengte-lemmet"><strong>Lengte lemmet:</strong><br>7,5 cm</div>
-                            <div class="nieuwwaarde"><strong>Nieuwwaarde:</strong><br>€ 95,95</div>
-                            <div class="aankoopwaarde"><strong>Aankoopwaarde:</strong><br>€ 94,95</div>
-                            <div><br>&nbsp;</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-content">
-                <div class="specs">
-                    <div class="row">
-                        <div class="topleft">
-                            <h2><div class="merk">Civivi</div> <div class="naam">Qubit C22030E-1</div></h2>
-                        </div>
-                        <div class="topright">
-                            <a href="https://www.knivesandtools.nl/nl/pt/-civivi-qubit-c22030e-1-black-aluminium-zakmes.htm" class="link-image" target="_blank"><img src="https://assets.katogroup.eu/i/katogroup/CIC22030E-1_01_civivi?%24product-image%24=&fmt=auto&h=868&w=1304" alt="Qubit"></a>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="left">
-                            <div class="uitvoering"><strong>Uitvoering:</strong><br>Black Aluminium</div>
-                            <div class="lemmet-vorm"><strong>Lemmet vorm:</strong><br>Droppoint</div>
-                            <div class="afwerking"><strong>Afwerking:</strong><br>Blackwashed</div>
-                            <div class="openmethode"><strong>Openmethode:</strong><br>Duimsteun</div>
-                            <div class="vergrendeling"><strong>Vergrendeling:</strong><br>Buttonlock</div>
-                            <div class="gewicht"><strong>Gewicht:</strong><br>65 g</div>
-                            <div class="aankoopdatum"><strong>Aankoopdatum:</strong><br>05-06-2024</div>
-                        </div>
-                        <div class="right">
-                            <div class="staalsoort"><strong>Staalsoort:</strong><br>Sandvik 14c28n</div>
-                            <div class="hardheid"><strong>Hardheid:</strong><br>59 HRC</div>
-                            <div class="lengte-gesloten"><strong>Lengte gesloten:</strong><br>10,7 cm</div>
-                            <div class="lengte-geopend"><strong>Lengte geopend:</strong><br>18,2 cm</div>
-                            <div class="lengte-lemmet"><strong>Lengte lemmet:</strong><br>7,5 cm</div>
-                            <div class="nieuwwaarde"><strong>Nieuwwaarde:</strong><br>€ 88,49</div>
-                            <div class="aankoopwaarde"><strong>Aankoopwaarde:</strong><br>€ 84,95</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-content">
-                <div class="specs">
-                    <div class="row">
-                        <div class="topleft">
-                            <h2><div class="merk">Civivi</div> <div class="naam">Odium C2010DS-1</div></h2>
-                        </div>
-                        <div class="topright">
-                            <a href="https://www.knivesandtools.nl/nl/pt/-civivi-odium-c2010ds-1-damascus-cuibourtia-wood-zakmes-ferrum-forge-design.htm" class="link-image" target="_blank">
-                                <img src="https://assets.katogroup.eu/i/katogroup/CIC2010DS-1_01_civivi?%24product-image%24=&fmt=auto&h=868&w=1304" alt="Odium">
-                            </a>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="left">
-                            <div class="uitvoering"><strong>Uitvoering:</strong><br>Guibourtia Wood</div>
-                            <div class="lemmet-vorm"><strong>Lemmet vorm:</strong><br>Droppoint</div>
-                            <div class="afwerking"><strong>Afwerking:</strong><br>Damascus</div>
-                            <div class="openmethode"><strong>Openmethode:</strong><br>Flipper, Duimgat</div>
-                            <div class="vergrendeling"><strong>Vergrendeling:</strong><br>Linerlock</div>
-                            <div class="gewicht"><strong>Gewicht:</strong><br>70 g</div>
-                            <div class="aankoopdatum"><strong>Aankoopdatum:</strong><br>09-06-2024</div>
-                        </div>
-                        <div class="right">
-                            <div class="staalsoort"><strong>Staalsoort:</strong><br>Roestvast Damast</div>
-                            <div class="hardheid"><strong>Hardheid:</strong><br>58-60 HRC</div>
-                            <div class="lengte-gesloten"><strong>Lengte gesloten:</strong><br>9 cm</div>
-                            <div class="lengte-geopend"><strong>Lengte geopend:</strong><br>15,7 cm</div>
-                            <div class="lengte-lemmet"><strong>Lengte lemmet:</strong><br>6,7 cm</div>
-                            <div class="nieuwwaarde"><strong>Nieuwwaarde:</strong><br>€ 112,45</div>
-                            <div class="aankoopwaarde"><strong>Aankoopwaarde:</strong><br>€ 106,52</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-content">
-                <div class="specs">
-                    <div class="row">
-                        <div class="topleft">
-                            <h2><div class="merk">Civivi</div> <div class="naam">Elementum C907C-DS1</div></h2>
-                        </div>
-                        <div class="topright">
-                            <a href="https://www.knivesandtools.nl/nl/pt/-civivi-elementum-c907c-ds1-damascus-shredded-gold-carbonfiber-zakmes.htm" class="link-image" target="_blank">
-                                <img src="https://assets.katogroup.eu/i/katogroup/CIC907C-DS1_01_civivi?%24product-image%24=&fmt=auto&h=868&w=1304" alt="Elementum">
-                            </a>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="left">
-                            <div class="uitvoering"><strong>Uitvoering:</strong><br>Shredded Gold Carbonfiber</div>
-                            <div class="lemmet-vorm"><strong>Lemmet vorm:</strong><br>Droppoint</div>
-                            <div class="afwerking"><strong>Afwerking:</strong><br>Damascus</div>
-                            <div class="openmethode"><strong>Openmethode:</strong><br>Flipper</div>
-                            <div class="vergrendeling"><strong>Vergrendeling:</strong><br>Linerlock</div>
-                            <div class="gewicht"><strong>Gewicht:</strong><br>75 g</div>
-                            <div class="aankoopdatum"><strong>Aankoopdatum:</strong><br>16-06-2024</div>
-                        </div>
-                        <div class="right">
-                            <div class="staalsoort"><strong>Staalsoort:</strong><br>Roestvast Damast</div>
-                            <div class="hardheid"><strong>Hardheid:</strong><br>58-60 HRC</div>
-                            <div class="lengte-gesloten"><strong>Lengte gesloten:</strong><br>10,2 cm</div>
-                            <div class="lengte-geopend"><strong>Lengte geopend:</strong><br>17,7 cm</div>
-                            <div class="lengte-lemmet"><strong>Lengte lemmet:</strong><br>7,5 cm</div>
-                            <div class="nieuwwaarde"><strong>Nieuwwaarde:</strong><br>€ 129,45</div>
-                            <div class="aankoopwaarde"><strong>Aankoopwaarde:</strong><br>€ 122,95</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-content">
-                <div class="specs">
-                    <div class="row">
-                        <div class="topleft">
-                            <h2><div class="merk">Sencut</div> <div class="naam">ArcBlast S22043B-3</div></h2>
-                        </div>
-                        <div class="topright">
-                            <a href="https://www.knivesandtools.nl/nl/pt/-sencut-arcblast-s22043b-3-bright-blue-aluminum-zakmes.htm" class="link-image" target="_blank">
-                                <img src="https://assets.katogroup.eu/i/katogroup/SES22043B-3_01_sencut?%24product-image%24=&fmt=auto&h=868&w=1304" alt="ArcBlast">
-                            </a>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="left">
-                            <div class="uitvoering"><strong>Uitvoering:</strong><br>Bright Blue Aluminium</div>
-                            <div class="lemmet-vorm"><strong>Lemmet vorm:</strong><br>Droppoint</div>
-                            <div class="afwerking"><strong>Afwerking:</strong><br>Mat</div>
-                            <div class="openmethode"><strong>Openmethode:</strong><br>Flipper, Duimsteun</div>
-                            <div class="vergrendeling"><strong>Vergrendeling:</strong><br>Buttonlock</div>
-                            <div class="gewicht"><strong>Gewicht:</strong><br>85 g</div>
-                            <div class="aankoopdatum"><strong>Aankoopdatum:</strong><br>22-06-2024</div>
-                        </div>
-                        <div class="right">
-                            <div class="staalsoort"><strong>Staalsoort:</strong><br>9Cr18MoV</div>
-                            <div class="hardheid"><strong>Hardheid:</strong><br>60 HRC</div>
-                            <div class="lengte-gesloten"><strong>Lengte gesloten:</strong><br>10,3 cm</div>
-                            <div class="lengte-geopend"><strong>Lengte geopend:</strong><br>18 cm</div>
-                            <div class="lengte-lemmet"><strong>Lengte lemmet:</strong><br>7,5 cm</div>
-                            <div class="nieuwwaarde"><strong>Nieuwwaarde:</strong><br>€ 54,95</div>
-                            <div class="aankoopwaarde"><strong>Aankoopwaarde:</strong><br>€ 54,95</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-content">
-                <div class="specs">
-                    <div class="row">
-                        <div class="topleft">
-                            <h2><div class="merk">Sencut</div> <div class="naam">Excalis S23068-4</div></h2>
-                        </div>
-                        <div class="topright">
-                            <a href="https://www.knivesandtools.nl/nl/pt/-sencut-excalis-s23068-4-satin-9cr18mov-guibourtia-wood-zakmes.htm" class="link-image" target="_blank">
-                                <img src="https://assets.katogroup.eu/i/katogroup/SES23068-4_01_sencut?%24product-image%24=&fmt=auto&h=868&w=1304" alt="Excalis">
-                            </a>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="left">
-                            <div class="uitvoering"><strong>Uitvoering:</strong><br>Guibourtia Wood</div>
-                            <div class="lemmet-vorm"><strong>Lemmet vorm:</strong><br>Reverse tanto</div>
-                            <div class="afwerking"><strong>Afwerking:</strong><br>Satin</div>
-                            <div class="openmethode"><strong>Openmethode:</strong><br>Flipper, Duimsteun</div>
-                            <div class="vergrendeling"><strong>Vergrendeling:</strong><br>Linerlock</div>
-                            <div class="gewicht"><strong>Gewicht:</strong><br>110 g</div>
-                            <div class="aankoopdatum"><strong>Aankoopdatum:</strong><br>22-06-2024</div>
-                        </div>
-                        <div class="right">
-                            <div class="staalsoort"><strong>Staalsoort:</strong><br>9Cr18Mov</div>
-                            <div class="hardheid"><strong>Hardheid:</strong><br>58-60 HRC</div>
-                            <div class="lengte-gesloten"><strong>Lengte gesloten:</strong><br>9,9 cm</div>
-                            <div class="lengte-geopend"><strong>Lengte geopend:</strong><br>17,5 cm</div>
-                            <div class="lengte-lemmet"><strong>Lengte lemmet:</strong><br>7,5 cm</div>
-                            <div class="nieuwwaarde"><strong>Nieuwwaarde:</strong><br>€ 49,00</div>
-                            <div class="aankoopwaarde"><strong>Aankoopwaarde:</strong><br>€ 49,00</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-content">
-                <div class="specs">
-                    <div class="row">
-                        <div class="topleft">
-                            <h2><div class="merk">Civivi</div> <div class="naam">Elementum C907A-7</div></h2>
-                        </div>
-                        <div class="topright">
-                            <a href="https://www.knivesandtools.nl/nl/pt/-civivi-elementum-c907a-7-satin-d2-polished-clear-lexan-zakmes.htm" class="link-image" target="_blank">
-                                <img src="https://assets.katogroup.eu/i/katogroup/CIC907A-7_01_civivi?%24product-image%24=&fmt=auto&h=868&w=1304" alt="Elementum">
-                            </a>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="left">
-                            <div class="uitvoering"><strong>Uitvoering:</strong><br>Polished Clear Lexan</div>
-                            <div class="lemmet-vorm"><strong>Lemmet vorm:</strong><br>Droppoint</div>
-                            <div class="afwerking"><strong>Afwerking:</strong><br>Satin</div>
-                            <div class="openmethode"><strong>Openmethode:</strong><br>Flipper</div>
-                            <div class="vergrendeling"><strong>Vergrendeling:</strong><br>Linerlock</div>
-                            <div class="gewicht"><strong>Gewicht:</strong><br>73 g</div>
-                            <div class="aankoopdatum"><strong>Aankoopdatum:</strong><br>04-07-2024</div>
-                        </div>
-                        <div class="right">
-                            <div class="staalsoort"><strong>Staalsoort:</strong><br>D2</div>
-                            <div class="hardheid"><strong>Hardheid:</strong><br>61 HRC</div>
-                            <div class="lengte-gesloten"><strong>Lengte gesloten:</strong><br>10,3 cm</div>
-                            <div class="lengte-geopend"><strong>Lengte geopend:</strong><br>17,8 cm</div>
-                            <div class="lengte-lemmet"><strong>Lengte lemmet:</strong><br>7,5 cm</div>
-                            <div class="nieuwwaarde"><strong>Nieuwwaarde:</strong><br>€ 60,00</div>
-                            <div class="aankoopwaarde"><strong>Aankoopwaarde:</strong><br>€ 60,00</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-content">
-                <div class="specs">
-                    <div class="row">
-                        <div class="topleft">
-                            <h2><div class="merk">Kershaw</div> <div class="naam">Mini Iridium 2051</div></h2>
-                        </div>
-                        <div class="topright">
-                            <a href="https://www.knivesandtools.nl/nl/pt/-kershaw-mini-iridium-2051-duralock-stonewashed-d2-ice-blue-aluminum-zakmes.htm" class="link-image" target="_blank">
-                                <img src="https://assets.katogroup.eu/i/katogroup/KE2051_01_kershaw?%24product-image%24=&fmt=auto&h=868&w=1304" alt="Mini Iridium">
-                            </a>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="left">
-                            <div class="uitvoering"><strong>Uitvoering:</strong><br>Ice Blue Aluminium</div>
-                            <div class="lemmet-vorm"><strong>Lemmet vorm:</strong><br>Spearpoint</div>
-                            <div class="afwerking"><strong>Afwerking:</strong><br>Stonewashed</div>
-                            <div class="openmethode"><strong>Openmethode:</strong><br>Duimsteun</div>
-                            <div class="vergrendeling"><strong>Vergrendeling:</strong><br>Crossbar lock, DuraLock</div>
-                            <div class="gewicht"><strong>Gewicht:</strong><br>70 g</div>
-                            <div class="aankoopdatum"><strong>Aankoopdatum:</strong><br>18-07-2024</div>
-                        </div>
-                        <div class="right">
-                            <div class="staalsoort"><strong>Staalsoort:</strong><br>D2</div>
-                            <div class="hardheid"><strong>Hardheid:</strong><br>60 HRC</div>
-                            <div class="lengte-gesloten"><strong>Lengte gesloten:</strong><br>10 cm</div>
-                            <div class="lengte-geopend"><strong>Lengte geopend:</strong><br>17,5 cm</div>
-                            <div class="lengte-lemmet"><strong>Lengte lemmet:</strong><br>7,5 cm</div>
-                            <div class="nieuwwaarde"><strong>Nieuwwaarde:</strong><br>€ 94,95</div>
-                            <div class="aankoopwaarde"><strong>Aankoopwaarde:</strong><br>€ 94,95</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-content">
-                <div class="specs">
-                    <div class="row">
-                        <div class="topleft">
-                            <h2><div class="merk">Benchmade</div> <div class="naam">Bugout 535FE-05</div></h2>
-                        </div>
-                        <div class="topright">
-                            <a href="https://www.knivesandtools.nl/nl/pt/-benchmade-bugout-535fe-05-crater-blue-grivory-flat-dark-earth-cerakote-zakmes.htm" class="link-image" target="_blank">
-                                <img src="https://assets.katogroup.eu/i/katogroup/BE535FE-05_01_benchmade?%24product-image%24=&fmt=auto&h=868&w=1304" alt="Bugout">
-                            </a>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="left">
-                            <div class="uitvoering"><strong>Uitvoering:</strong><br>Crater Blue Grivory</div>
-                            <div class="lemmet-vorm"><strong>Lemmet vorm:</strong><br>Droppoint</div>
-                            <div class="afwerking"><strong>Afwerking:</strong><br>Cerakote</div>
-                            <div class="openmethode"><strong>Openmethode:</strong><br>Duimsteun</div>
-                            <div class="vergrendeling"><strong>Vergrendeling:</strong><br>Crossbar Lock, axislock</div>
-                            <div class="gewicht"><strong>Gewicht:</strong><br>55 g</div>
-                            <div class="aankoopdatum"><strong>Aankoopdatum:</strong><br>01-08-2024</div>
-                        </div>
-                        <div class="right">
-                            <div class="staalsoort"><strong>Staalsoort:</strong><br>CPM S30V</div>
-                            <div class="hardheid"><strong>Hardheid:</strong><br>60 HRC</div>
-                            <div class="lengte-gesloten"><strong>Lengte gesloten:</strong><br>10,7 cm</div>
-                            <div class="lengte-geopend"><strong>Lengte geopend:</strong><br>18,8 cm</div>
-                            <div class="lengte-lemmet"><strong>Lengte lemmet:</strong><br>8,2 cm</div>
-                            <div class="nieuwwaarde"><strong>Nieuwwaarde:</strong><br>€ 236,95</div>
-                            <div class="aankoopwaarde"><strong>Aankoopwaarde:</strong><br>€ 172,99</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-content">
-                <div class="specs">
-                    <div class="row">
-                        <div class="topleft">
-                            <h2><div class="merk">WE Knife</div> <div class="naam">Kitefin 2001B</div></h2>
-                        </div>
-                        <div class="topright">
-                            <a href="https://www.knivesandtools.nl/nl/pt/-we-knife-kitefin-2001b-shredded-carbonfiber-zakmes.htm" class="link-image" target="_blank">
-                                <img src="https://assets.katogroup.eu/i/katogroup/WK2001B_01_we-knife?%24product-image%24=&fmt=auto&h=868&w=1304" alt="Kitefin">
-                            </a>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="left">
-                            <div class="uitvoering"><strong>Uitvoering:</strong><br>Titanium Shredded Carbonfiber</div>
-                            <div class="lemmet-vorm"><strong>Lemmet vorm:</strong><br>Droppoint</div>
-                            <div class="afwerking"><strong>Afwerking:</strong><br>Mat</div>
-                            <div class="openmethode"><strong>Openmethode:</strong><br>Flipper</div>
-                            <div class="vergrendeling"><strong>Vergrendeling:</strong><br>Framelock</div>
-                            <div class="gewicht"><strong>Gewicht:</strong><br>70 g</div>
-                            <div class="aankoopdatum"><strong>Aankoopdatum:</strong><br>01-08-2024</div>
-                        </div>
-                        <div class="right">
-                            <div class="staalsoort"><strong>Staalsoort:</strong><br>CPM S35VN</div>
-                            <div class="hardheid"><strong>Hardheid:</strong><br>61 HRC</div>
-                            <div class="lengte-gesloten"><strong>Lengte gesloten:</strong><br>10,8 cm</div>
-                            <div class="lengte-geopend"><strong>Lengte geopend:</strong><br>18,9 cm</div>
-                            <div class="lengte-lemmet"><strong>Lengte lemmet:</strong><br>8,2 cm</div>
-                            <div class="nieuwwaarde"><strong>Nieuwwaarde:</strong><br>€ 207,95</div>
-                            <div class="aankoopwaarde"><strong>Aankoopwaarde:</strong><br>€ 203,80</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-content">
-                <div class="specs">
-                    <div class="row">
-                        <div class="topleft">
-                            <h2><div class="merk">Benchmade</div> <div class="naam">Bugout 535BK-4</div></h2>
-                        </div>
-                        <div class="topright">
-                            <a href="https://www.knivesandtools.nl/nl/pt/-benchmade-bugout-535bk-4-aluminium-cerakote-m390-zakmes.htm" class="link-image" target="_blank">
-                                <img src="https://assets.katogroup.eu/i/katogroup/BE535BK-4_01_benchmade?%24product-image%24=&fmt=auto&h=868&w=1304" alt="Bugout">
-                            </a>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="left">
-                            <div class="uitvoering"><strong>Uitvoering:</strong><br>Aluminium</div>
-                            <div class="lemmet-vorm"><strong>Lemmet vorm:</strong><br>Droppoint</div>
-                            <div class="afwerking"><strong>Afwerking:</strong><br>Cerakote</div>
-                            <div class="openmethode"><strong>Openmethode:</strong><br>Duimsteun</div>
-                            <div class="vergrendeling"><strong>Vergrendeling:</strong><br>Crossbar Lock, axislock</div>
-                            <div class="gewicht"><strong>Gewicht:</strong><br>70 g</div>
-                            <div class="aankoopdatum"><strong>Aankoopdatum:</strong><br>11-10-2024</div>
-                        </div>
-                        <div class="right">
-                            <div class="staalsoort"><strong>Staalsoort:</strong><br>Böhler M390</div>
-                            <div class="hardheid"><strong>Hardheid:</strong><br>60 HRC</div>
-                            <div class="lengte-gesloten"><strong>Lengte gesloten:</strong><br>10,7 cm</div>
-                            <div class="lengte-geopend"><strong>Lengte geopend:</strong><br>18,8 cm</div>
-                            <div class="lengte-lemmet"><strong>Lengte lemmet:</strong><br>8,2 cm</div>
-                            <div class="nieuwwaarde"><strong>Nieuwwaarde:</strong><br>€ 355,95</div>
-                            <div class="aankoopwaarde"><strong>Aankoopwaarde:</strong><br>€ 227,99</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-content">
-                <div class="specs">
-                    <div class="row">
-                        <div class="topleft">
-                            <h2><div class="merk">Remette</div> <div class="naam">Peregrine Falcon RTT1-TX</div></h2>
-                        </div>
-                        <div class="topright">
-                            <a href="https://www.lamnia.com/nl/p/91112/messen/remette-peregrine-falcon-rtt1-tx-vouwmes" class="link-image" target="_blank">
-                                <img src="https://sharg.pl/hpeciai/a24cd98a6e3bf5e02318520085601ea0/eng_pl_Remette-Peregrine-Falcon-Knife-Thunder-Lightning-Titanium-Hand-Grinding-Pearlescent-M390-RTT1-T-122054_1.webp" class="rotated-image" alt="Peregrine Falcon"><!--https://www.remetteknife.com/cdn/shop/files/1_34cced1f-8370-4459-ac55-f0ba10a0707b.jpg-->
-                            </a>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="left">
-                            <div class="uitvoering"><strong>Uitvoering:</strong><br>Thunder Lightning Titanium</div>
-                            <div class="lemmet-vorm"><strong>Lemmet vorm:</strong><br>Reverse tanto</div>
-                            <div class="afwerking"><strong>Afwerking:</strong><br>Manual Grind Pearlescent</div>
-                            <div class="openmethode"><strong>Openmethode:</strong><br>Duimgat</div>
-                            <div class="vergrendeling"><strong>Vergrendeling:</strong><br>Button linerlock</div>
-                            <div class="gewicht"><strong>Gewicht:</strong><br>136 g</div>
-                            <div class="aankoopdatum"><strong>Aankoopdatum:</strong><br>14-11-2024</div>
-                        </div>
-                        <div class="right">
-                            <div class="staalsoort"><strong>Staalsoort:</strong><br>Böhler M390</div>
-                            <div class="hardheid"><strong>Hardheid:</strong><br>59-61 HRC</div>
-                            <div class="lengte-gesloten"><strong>Lengte gesloten:</strong><br>12,2 cm</div>
-                            <div class="lengte-geopend"><strong>Lengte geopend:</strong><br>19,8 cm</div>
-                            <div class="lengte-lemmet"><strong>Lengte lemmet:</strong><br>8,2 cm</div>
-                            <div class="nieuwwaarde"><strong>Nieuwwaarde:</strong><br>€ 282,49</div>
-                            <div class="aankoopwaarde"><strong>Aankoopwaarde:</strong><br>€ 266,10</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-content">
-                <div class="specs">
-                    <div class="row">
-                        <div class="topleft">
-                            <h2><div class="merk">Kizer</div> <div class="naam">Militaw KI3634A2</div></h2>
-                        </div>
-                        <div class="topright">
-                            <a href="https://www.knivesandtools.nl/nl/pt/-kizer-militaw-ki3634a2-dlc-s45vn-black-titanium-en-purple-haze-fatcarbon-zakmes-jonathan-styles-design.htm" class="link-image" target="_blank">
-                                <img src="https://assets.katogroup.eu/i/katogroup/KZKI3634A2_01_kizer?%24product-image%24=&fmt=auto&h=868&w=1304" alt="Militaw">
-                            </a>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="left">
-                            <div class="uitvoering"><strong>Uitvoering:</strong><br>Black Titanium & Purple Haze Fatcarbon</div>
-                            <div class="lemmet-vorm"><strong>Lemmet vorm:</strong><br>Droppoint</div>
-                            <div class="afwerking"><strong>Afwerking:</strong><br>Satin DLC</div>
-                            <div class="openmethode"><strong>Openmethode:</strong><br>Duimgat</div>
-                            <div class="vergrendeling"><strong>Vergrendeling:</strong><br>Framelock</div>
-                            <div class="gewicht"><strong>Gewicht:</strong><br>110 g</div>
-                            <div class="aankoopdatum"><strong>Aankoopdatum:</strong><br>27-01-2025</div>
-                        </div>
-                        <div class="right">
-                            <div class="staalsoort"><strong>Staalsoort:</strong><br>CPM S45VN</div>
-                            <div class="hardheid"><strong>Hardheid:</strong><br>58-61 HRC</div>
-                            <div class="lengte-gesloten"><strong>Lengte gesloten:</strong><br>11,7 cm</div>
-                            <div class="lengte-geopend"><strong>Lengte geopend:</strong><br>20,4 cm</div>
-                            <div class="lengte-lemmet"><strong>Lengte lemmet:</strong><br>8,7 cm</div>
-                            <div class="nieuwwaarde"><strong>Nieuwwaarde:</strong><br>€ 299,00</div>
-                            <div class="aankoopwaarde"><strong>Aankoopwaarde:</strong><br>€ 209,49</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-content">
-                <div class="specs">
-                    <div class="row">
-                        <div class="topleft">
-                            <h2><div class="merk">Kizer Vanguard</div> <div class="naam">Assasin V3549A2</div></h2>
-                        </div>
-                        <div class="topright">
-                            <a href="https://www.knivesandtools.nl/nl/pt/-kizer-vanguard-assassin-v3549a2-satin-nitro-v-denim-micarta-zakmes-azo-design.htm" class="link-image" target="_blank">
-                                <img src="https://assets.katogroup.eu/i/katogroup/KZV3549A2_01_kizer?%24product-image%24=&fmt=auto&h=868&w=1304" alt="Assasin">
-                            </a>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="left">
-                            <div class="uitvoering"><strong>Uitvoering:</strong><br>Denim Micarta</div>
-                            <div class="lemmet-vorm"><strong>Lemmet vorm:</strong><br>Droppoint</div>
-                            <div class="afwerking"><strong>Afwerking:</strong><br>Satin</div>
-                            <div class="openmethode"><strong>Openmethode:</strong><br>Duimsteun</div>
-                            <div class="vergrendeling"><strong>Vergrendeling:</strong><br>Crossbar Lock</div>
-                            <div class="gewicht"><strong>Gewicht:</strong><br>80 g</div>
-                            <div class="aankoopdatum"><strong>Aankoopdatum:</strong><br>12-03-2025</div>
-                        </div>
-                        <div class="right">
-                            <div class="staalsoort"><strong>Staalsoort:</strong><br>Nitro-V</div>
-                            <div class="hardheid"><strong>Hardheid:</strong><br>62 HRC</div>
-                            <div class="lengte-gesloten"><strong>Lengte gesloten:</strong><br>10,7 cm</div>
-                            <div class="lengte-geopend"><strong>Lengte geopend:</strong><br>18,3 cm</div>
-                            <div class="lengte-lemmet"><strong>Lengte lemmet:</strong><br>7,6 cm</div>
-                            <div class="nieuwwaarde"><strong>Nieuwwaarde:</strong><br>€ 79,00</div>
-                            <div class="aankoopwaarde"><strong>Aankoopwaarde:</strong><br>€ 71,49</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-content">
-                <div class="specs">
-                    <div class="row">
-                        <div class="topleft">
-                            <h2><div class="merk">Kunwu Knives</div> <div class="naam">Compadre</div></h2>
-                        </div>
-                        <div class="topright">
-                            <a href="https://www.lamnia.com/nl/p/103263/messen/kunwu-knives-reverse-tux-compadre-diamond-texture-ti-dlc-vouwmes" class="link-image" target="_blank">
-                                <img src="https://cdn11.bigcommerce.com/s-fedcb/images/stencil/640w/products/30527/105951/Kunwu_K706C-T401__22709.1.jpg" class="rotated-image" alt="Compadre">
-                            </a>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="left">
-                            <div class="uitvoering"><strong>Uitvoering:</strong><br>Reverse Tux Diamond Texture Titanium</div>
-                            <div class="lemmet-vorm"><strong>Lemmet vorm:</strong><br>Clippoint</div>
-                            <div class="afwerking"><strong>Afwerking:</strong><br>Satin DLC</div>
-                            <div class="openmethode"><strong>Openmethode:</strong><br>Duimgat</div>
-                            <div class="vergrendeling"><strong>Vergrendeling:</strong><br>Framelock</div>
-                            <div class="gewicht"><strong>Gewicht:</strong><br>111 g</div>
-                            <div class="aankoopdatum"><strong>Aankoopdatum:</strong><br>24-03-2025</div>
-                        </div>
-                        <div class="right">
-                            <div class="staalsoort"><strong>Staalsoort:</strong><br>Vanax</div>
-                            <div class="hardheid"><strong>Hardheid:</strong><br>60-62 HRC</div>
-                            <div class="lengte-gesloten"><strong>Lengte gesloten:</strong><br>11,2 cm</div>
-                            <div class="lengte-geopend"><strong>Lengte geopend:</strong><br>18,0 cm</div>
-                            <div class="lengte-lemmet"><strong>Lengte lemmet:</strong><br>7,5 cm</div>
-                            <div class="nieuwwaarde"><strong>Nieuwwaarde:</strong><br>€ 313,35</div>
-                            <div class="aankoopwaarde"><strong>Aankoopwaarde:</strong><br>€ 313,35</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div id="knives-container" class="container">
+    </div>
+    </div>
         
 </body>
 </html>
